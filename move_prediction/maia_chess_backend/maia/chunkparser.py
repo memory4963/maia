@@ -91,6 +91,7 @@ class ChunkParser:
         writers = []
         processes = []
         for i in range(workers):
+            # self.task(chunkdatasrc, None)
             read, write = mp.Pipe(duplex=False)
             p = mp.Process(target=self.task, args=(chunkdatasrc, write))
             processes.append(p)
@@ -226,14 +227,18 @@ class ChunkParser:
             return
 
         for i in range(0, len(chunkdata), record_size):
-            if self.sample > 1:
-                # Downsample, using only 1/Nth of the items.
-                if random.randint(0, self.sample-1) != 0:
-                    continue  # Skip this record.
+            # if self.sample > 1:
+            #     # Downsample, using only 1/Nth of the items.
+            #     if random.randint(0, self.sample-1) != 0:
+            #         continue  # Skip this record.
             record = chunkdata[i:i+record_size]
             if version == V3_VERSION:
                 # add 16 bytes of fake root_q, best_q, root_d, best_d to match V4 format
                 record += 16 * b'\x00'
+            # (ver, probs, planes, us_ooo, us_oo, them_ooo, them_oo, stm, rule50_count, move_count, winner, root_q, best_q, root_d, best_d) = self.v4_struct.unpack(record)
+            # planes = np.unpackbits(np.frombuffer(planes, dtype=np.uint8)).astype(np.float32)
+            # planes = planes.reshape(-1, 8, 8)
+            # np.save('planes.npy', planes)
             yield record
 
 

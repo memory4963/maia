@@ -1,5 +1,7 @@
 training/
 validation/
+models/
+maia_config*/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

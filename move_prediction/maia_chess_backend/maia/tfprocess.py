@@ -169,7 +169,7 @@ class TFProcess:
         self.policy_loss_fn = policy_loss
         def policy_accuracy(target, output):
             target, output = correct_policy(target, output)
-            return tf.reduce_mean(tf.cast(tf.equal(tf.argmax(input=target, axis=1), tf.argmax(input=output, axis=1)), tf.float32))
+            return tf.reduce_mean(tf.cast(tf.equal(tf.argmax(input=target, axis=1), tf.argmax(input=output, axis=1)), tf.float32)), tf.equal(tf.argmax(input=target, axis=1), tf.argmax(input=output, axis=1))
         self.policy_accuracy_fn = policy_accuracy
 
 
@@ -342,9 +342,12 @@ class TFProcess:
         # self.save_leelaz_weights_v2('restored.pb.gz')
 
     def restore_v2(self):
-        if self.manager.latest_checkpoint is not None:
-            print("Restoring from {0}".format(self.manager.latest_checkpoint))
-            self.checkpoint.restore(self.manager.latest_checkpoint)
+        # if self.manager.latest_checkpoint is not None:
+        #     print("Restoring from {0}".format(self.manager.latest_checkpoint))
+        #     self.checkpoint.restore(self.manager.latest_checkpoint)
+        if self.cfg['checkpoint']:
+            self.checkpoint.restore(self.cfg['checkpoint'])
+        # self.checkpoint.restore('models/move_prediction/maia_config_laststep/ckpt-41')
 
     def process_loop_v2(self, batch_size, test_batches, batch_splits=1):
         # Get the initial steps value in case this is a resume from a step count
@@ -392,7 +395,7 @@ class TFProcess:
             test_batches //= 2
 
         # Run test before first step to see delta since end of last run.
-        if steps % self.cfg['training']['total_steps'] == 0:
+        if steps % self.cfg['training']['test_steps'] == 0:
             # Steps is given as one higher than current in order to avoid it
             # being equal to the value the end of a run is stored against.
             self.calculate_test_summaries_v2(test_batches, steps + 1)
@@ -523,7 +526,7 @@ class TFProcess:
     def calculate_test_summaries_inner_loop(self, x, y, z, q):
         policy, value = self.model(x, training=False)
         policy_loss = self.policy_loss_fn(y, policy)
-        policy_accuracy = self.policy_accuracy_fn(y, policy)
+        policy_accuracy, policy_argmax = self.policy_accuracy_fn(y, policy)
         if self.wdl:
             value_loss = self.value_loss_fn(self.qMix(z, q), value)
             mse_loss = self.mse_loss_fn(self.qMix(z, q), value)
@@ -532,7 +535,7 @@ class TFProcess:
             value_loss = self.value_loss_fn(self.qMix(z, q), value)
             mse_loss = self.mse_loss_fn(self.qMix(z, q), value)
             value_accuracy = tf.constant(0.)
-        return policy_loss, value_loss, mse_loss, policy_accuracy, value_accuracy
+        return policy_loss, value_loss, mse_loss, policy_accuracy, value_accuracy, policy_argmax
 
     def calculate_test_summaries_v2(self, test_batches, steps):
         sum_policy_accuracy = 0
@@ -542,7 +545,7 @@ class TFProcess:
         sum_value = 0
         for _ in range(0, test_batches):
             x, y, z, q = next(self.test_iter)
-            policy_loss, value_loss, mse_loss, policy_accuracy, value_accuracy = self.calculate_test_summaries_inner_loop(x, y, z, q)
+            policy_loss, value_loss, mse_loss, policy_accuracy, value_accuracy, policy_argmax = self.calculate_test_summaries_inner_loop(x, y, z, q)
             sum_policy_accuracy += policy_accuracy
             sum_mse += mse_loss
             sum_policy += policy_loss
@@ -551,6 +554,8 @@ class TFProcess:
                 sum_value += value_loss
         sum_policy_accuracy /= test_batches
         sum_policy_accuracy *= 100
+        # print(sum_policy_accuracy)
+        # exit()
         sum_policy /= test_batches
         sum_value /= test_batches
         if self.wdl:
