@@ -1,6 +1,6 @@
 # Trap-prefered Chess AI
 
-## Data Preparison
+## Data Prepare
 `download_pgns.py` is used for download pgn data.
 After that, combine all the pgn files into one by concatenating them one by one. Then please follow the "Move Prediction" section to generate the data.
 
