@@ -13,7 +13,7 @@ To create your own maia from a set of chess games in the PGN format:
    2. Make sure all the required packages are installed from `requirements.txt`
 2. Convert the PGN into the training format
    1. Add the [`pgn-extract`](https://www.cs.kent.ac.uk/people/staff/djb/pgn-extract/) tool to your path
-   ~~2. Add the [`trainingdata-tool`](https://github.com/DanielUranga/trainingdata-tool) to your path~~
+   2. ~~Add the [`trainingdata-tool`](https://github.com/DanielUranga/trainingdata-tool) to your path~~
    2. Add the [`trainingdata-tool`](https://github.com/DanielUranga/trainingdata-tool) to your path, the changed file are attached in this project, please compile it following the original repo.
    3. Run `move_prediction/pgn_to_trainingdata.sh PGN_FILE_PATH OUTPUT_PATH`
    4. Wait a bit as the processing is both IO and CPU intense
